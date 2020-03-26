@@ -197,8 +197,8 @@ clrmem:
 
 loadsprites:
   ; sprites will be stored from $0200-$02FF, see OAM_RAM in nesdefs.inc
-: ldx #$00         ; start at 0
-  lda sprites, x   ; load data from address (sprites + x)
+  ldx #$00         ; start at 0
+: lda sprites, x   ; load data from address (sprites + x)
   sta $0200, x     ; store into ram address ($0200 + x)
   inx
   cpx #32          ; loop 32 times
