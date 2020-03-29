@@ -3,7 +3,7 @@
 
 ;  # Assemble:
 ;  ca65 sprites.s -o sprites.o
-;   # Link, to create test.nes:
+;   # Link, to create sprites.nes:
 ;  ld65 sprites.o -o sprites.nes -C nesfile.ini
 ; ...and then run it with FCEUX.
 
