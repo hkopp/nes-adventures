@@ -3,7 +3,7 @@
 
 ;  # Assemble:
 ;  ca65 bg.s -o bg.o
-;   # Link, to create test.nes:
+;   # Link, to create bg.nes:
 ;  ld65 bg.o -o bg.nes -C nesfile.ini
 ; ...and then run it with FCEUX.
 
