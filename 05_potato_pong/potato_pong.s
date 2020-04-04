@@ -501,4 +501,4 @@ BottomWallDone:
 
 .segment "PATTERN0"
 
-  .incbin "potato_pong.chr"
+  .incbin "chr/potato_pong.chr"
