@@ -16,6 +16,8 @@
 RIGHT_WALL = 224
 TOP_WALL = 24
 BOTTOM_WALL = 204
+PADDLE_X = 16 +8 ; the x position of the right border of the paddle
+                 ; for collision detection, not for placement of the paddle
 
 
 ; ===== Local macros ===========================================================
@@ -395,7 +397,6 @@ LoadGameScreenLoop:
   sta ballSpeedY
 
 GameLoop:
-  ; TODO
   ; read controllers and maybe move paddle
   lda player1_buttons
   and #BUTTON_UP
@@ -460,10 +461,11 @@ HandlingDownDone:
   clc
   adc ballSpeedY
   sta $020c
+
   ; if the ball touches something, adjust the speed
   ; bge (branch on greater or equal) = bcs
   ; blt (branch if less than) = bcc
-    ; if the ball touches the right wall
+  ; if the ball touches the right wall
   lda $020f ; x position of ball
   cmp #RIGHT_WALL
   bcc RightWallDone
@@ -471,7 +473,8 @@ HandlingDownDone:
   lda #$ff
   sta ballSpeedX
 RightWallDone:
-    ; if the ball touches the top wall
+
+  ; if the ball touches the top wall
   lda $020c ; y position of ball
   cmp #TOP_WALL
   bcs TopWallDone
@@ -479,7 +482,8 @@ RightWallDone:
   lda #$01
   sta ballSpeedY
 TopWallDone:
-    ; if the ball touches the bottom wall
+
+  ; if the ball touches the bottom wall
   lda $020c ; y position of ball
   cmp #BOTTOM_WALL
   bcc BottomWallDone
@@ -487,8 +491,34 @@ TopWallDone:
   lda #$ff
   sta ballSpeedY
 BottomWallDone:
-    ; if the ball touches the paddle
-    ; TODO
+
+  ; check if the ball touches the paddle
+  ; the x position of a sprite it its leftmost position.
+  ; the y position of a sprite is one lower than its highest pixel
+
+  ; is ball behind the x-line of the paddle?
+  lda $020f ; x position of ball
+  cmp #PADDLE_X
+  bcs PaddleDone ; no collision, we are done
+  ; check y-collision
+  ; ball below top of paddle?
+  lda $020c ; y position of ball
+  cmp $0200 ; y position of top of paddle sprite
+  bcc PaddleDone ; blt (branch if less than) = bcc
+
+  ; ball above bottom of paddle?
+  ; note that the y position of the bottom of the paddle it its
+  ; _uppermost_ pixel
+  ; so we subtract 8 from the ball position
+  sec
+  sbc #$08
+  cmp $0208 ; y position of bottom of paddle sprite
+  bcs PaddleDone ; bge (branch on greater or equal) = bcs
+  ; When we are here, we have a ball-paddle collision
+  ; adjust speed
+  lda #$01
+  sta ballSpeedX
+PaddleDone:
     ; if the left wall is hit, the game is over
     ; TODO
   rts
