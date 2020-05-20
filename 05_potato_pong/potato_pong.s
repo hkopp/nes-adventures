@@ -238,58 +238,14 @@ clrmem:
   ; rendered as pixels on the screen. See:
   ; http://wiki.nesdev.com/w/index.php/Palette#The_background_palette_hack
 
-  ;;;;;;;;;;;;;;;;;;;;
   ; Load title screen
-  ;;;;;;;;;;;;;;;;;;;;
-  ; Each nametable is 1024 bytes of memory, arranged as 32 columns by 30 rows of
-  ; tile references, for a total of 960 ($3C0) bytes. The remaining 64 bytes are
-  ; for the attribute table of that nametable.
-  ; Nametable 0 starts at PPU address $2000.
-  ; For more information, see: http://wiki.nesdev.com/w/index.php/Nametable
-  ; NOTE: We can only count up to 255 in a single loop, rather than 960.
-  ; Thus we are using the technique explained in Nerdy Nights 8:
-  ; Indirect Indexed mode
   
   lda #<(title_screen) ; the low byte of the title screen location
   sta pointerLo       ; put the low byte of the address of background into pointer
   lda #>(title_screen)
   sta pointerHi       ; put the high byte of the address into pointer
 
-  lda #$00
-  sta counterLo       ; put the loop counter into 16 bit variable
-  lda #$04
-  sta counterHi       ; count = $0400 = 1KB, the whole screen at once including attributes
-  ppu_addr $2000      ; Tell the PPU we want to access address $2000 in its address space.
-                      ; That is where the nametable lies.
-
-  ldy #$00            ; put y to 0 and don't change it
-LoadBackgroundLoop:
-  lda (pointerLo), y  ; a = the stuff at the 16 bit pointer starting with pointerLo + y
-  sta $2007           ; copy one background byte
-
-  lda pointerLo
-  clc
-  adc #$01
-  sta pointerLo
-  lda pointerHi
-  adc #$00
-  sta pointerHi       ; increment the pointer to the next byte
-                      ; This is just adding 1 to a 16 bit variable
-  lda counterLo
-  sec
-  sbc #$01
-  sta counterLo
-  lda counterHi
-  sbc #$00
-  sta counterHi       ; decrement the loop counter
-                      ; This is just subtracting 1 from a 16 bit variable
-
-  lda counterLo
-  cmp #$00
-  bne LoadBackgroundLoop
-  lda counterHi
-  cmp #$00
-  bne LoadBackgroundLoop  ; if the loop counter isn't 0000, keep copyin
+  jsr LoadScreen
 
   ; Activate VBLANK NMIs.
   lda #VBLANK_NMI
@@ -338,41 +294,7 @@ WaitForStart:
   lda #>(game_screen)
   sta pointerHi       ; put the high byte of the address into pointer
 
-  lda #$00
-  sta counterLo       ; put the loop counter into 16 bit variable
-  lda #$04
-  sta counterHi       ; count = $0400 = 1KB, the whole screen at once including attributes
-  ppu_addr $2000      ; Tell the PPU we want to access address $2000 in its address space.
-                      ; That is where the nametable lies.
-
-  ldy #$00            ; put y to 0 and don't change it
-LoadGameScreenLoop:
-  lda (pointerLo), y  ; a = the stuff at the 16 bit pointer starting with pointerLo + y
-  sta $2007           ; copy one background byte
-
-  lda pointerLo
-  clc
-  adc #$01
-  sta pointerLo
-  lda pointerHi
-  adc #$00
-  sta pointerHi       ; increment the pointer to the next byte
-                      ; This is just adding 1 to a 16 bit variable
-  lda counterLo
-  sec
-  sbc #$01
-  sta counterLo
-  lda counterHi
-  sbc #$00
-  sta counterHi       ; decrement the loop counter
-                      ; This is just subtracting 1 from a 16 bit variable
-
-  lda counterLo
-  cmp #$00
-  bne LoadGameScreenLoop
-  lda counterHi
-  cmp #$00
-  bne LoadGameScreenLoop  ; if the loop counter isn't 0000, keep copyin
+  jsr LoadScreen
 
   ; Draw the Sprites (Bat + Ball)
   ; sprites are stores from $0200-$02FF
@@ -415,6 +337,60 @@ HandlingDownDone:
 
   jmp GameLoop
 
+.endproc
+
+.proc LoadScreen
+  ;;;;;;;;;;;;;;;;;;;;
+  ; Load title screen
+  ;;;;;;;;;;;;;;;;;;;;
+  ; Each nametable is 1024 bytes of memory, arranged as 32 columns by 30 rows of
+  ; tile references, for a total of 960 ($3C0) bytes. The remaining 64 bytes are
+  ; for the attribute table of that nametable.
+  ; Nametable 0 starts at PPU address $2000.
+  ; For more information, see: http://wiki.nesdev.com/w/index.php/Nametable
+  ; NOTE: We can only count up to 255 in a single loop, rather than 960.
+  ; Thus we are using the technique explained in Nerdy Nights 8:
+  ; Indirect Indexed mode
+  
+  ; To invoke this subroutine, you have to
+  ;   - put the low byte of the screen location in pointerLo
+  ;   - put the high byte of the screen location in pointerHi
+
+  lda #$00
+  sta counterLo       ; put the loop counter into 16 bit variable
+  lda #$04
+  sta counterHi       ; count = $0400 = 1KB, the whole screen at once including attributes
+  ppu_addr $2000      ; Tell the PPU we want to access address $2000 in its address space.
+                      ; That is where the nametable lies.
+
+  ldy #$00            ; put y to 0 and don't change it
+LoadScreenLoop:
+  lda (pointerLo), y  ; a = the stuff at the 16 bit pointer starting with pointerLo + y
+  sta $2007           ; copy one background byte
+
+  lda pointerLo
+  clc
+  adc #$01
+  sta pointerLo
+  lda pointerHi
+  adc #$00
+  sta pointerHi       ; increment the pointer to the next byte
+                      ; This is just adding 1 to a 16 bit variable
+  lda counterLo
+  sec
+  sbc #$01
+  sta counterLo
+  lda counterHi
+  sbc #$00
+  sta counterHi       ; decrement the loop counter
+                      ; This is just subtracting 1 from a 16 bit variable
+
+  lda counterLo
+  cmp #$00
+  bne LoadScreenLoop
+  lda counterHi
+  cmp #$00
+  bne LoadScreenLoop  ; if the loop counter isn't 0000, keep copyin
 .endproc
 
 .proc MovePaddleUp
